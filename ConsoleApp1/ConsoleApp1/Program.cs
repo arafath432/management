@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+
 namespace myprograme
 {
     interface ICinemaOperations
@@ -26,6 +27,11 @@ namespace myprograme
         public static List<Hall> GetHallList()
         {
             return hallList;
+        }
+
+        public static Hall GetHallByNumber(int hallNumber)
+        {
+            return hallList.Find(hall => hall.HallNo == hallNumber);
         }
     }
 
@@ -54,106 +60,81 @@ namespace myprograme
         public void EntryShow(int showId, string movieName, string time)
         {
             showList.Add((movieName, showId, time));
-            SeatMatrix(showId);
-        }
-
-        private void SeatMatrix(int showId)
-        {
             seats[showId] = new int[row, col];
         }
 
         public void ViewShowList()
         {
+            Console.WriteLine($"\nHall {hallNo} - Show List:");
             foreach (var show in showList)
             {
-                Console.WriteLine($"\tMovie Name: {show.movieName}, Show Id: {show.showId}, Time: {show.time}");
+                Console.WriteLine($"\tMovie: {show.movieName}, Show ID: {show.showId}, Time: {show.time}");
             }
         }
 
         public void BookSeats()
         {
-            try
+            Console.Write("Enter show ID to book tickets: ");
+            if (!int.TryParse(Console.ReadLine(), out int showId) || !seats.ContainsKey(showId))
             {
-                Console.Write("Enter show id to book tickets: ");
-                int showId = int.Parse(Console.ReadLine());
+                Console.WriteLine("\tInvalid show ID.");
+                return;
+            }
 
-                bool showExists = false;
-                foreach (var hall in StarCinema.GetHallList())
+            Console.Write("Enter the number of tickets to book: ");
+            if (!int.TryParse(Console.ReadLine(), out int ticketCount) || ticketCount <= 0)
+            {
+                Console.WriteLine("\tInvalid ticket count.");
+                return;
+            }
+
+            for (int t = 0; t < ticketCount; t++)
+            {
+                Console.Write($"Enter row number for ticket {t + 1}: ");
+                if (!int.TryParse(Console.ReadLine(), out int row) || row < 0 || row >= this.row)
                 {
-                    if (hall.seats.ContainsKey(showId))
-                    {
-                        showExists = true;
-                        break;
-                    }
+                    Console.WriteLine("\tInvalid row number.");
+                    continue;
                 }
 
-                if (!showExists)
+                Console.Write($"Enter column number for ticket {t + 1}: ");
+                if (!int.TryParse(Console.ReadLine(), out int col) || col < 0 || col >= this.col)
                 {
-                    Console.WriteLine("\tShow id does not exist");
-                    return;
-                }
-
-                Console.Write("Enter the row number: ");
-                int row = int.Parse(Console.ReadLine());
-
-                Console.Write("Enter the column number: ");
-                int col = int.Parse(Console.ReadLine());
-
-                if (row < 0 || row >= this.row || col < 0 || col >= this.col)
-                {
-                    Console.WriteLine("\tInvalid seat position.");
-                    return;
+                    Console.WriteLine("\tInvalid column number.");
+                    continue;
                 }
 
                 if (seats[showId][row, col] == 1)
                 {
-                    Console.WriteLine("\tThe seat is already booked.");
+                    Console.WriteLine($"\tSeat ({row}, {col}) is already booked.");
                 }
                 else
                 {
                     seats[showId][row, col] = 1;
-                    Console.WriteLine($"\tSeat at position ({row}, {col}) successfully booked.");
-                    foreach (var show in showList)
-                    {
-                        Console.WriteLine($"\tSee online:https://www.moviesexample.com/{show.movieName}/{show.showId}");
-                    }
-                    
+                    Console.WriteLine($"\tSeat ({row}, {col}) successfully booked.");
                 }
-            }
-            catch (FormatException)
-            {
-                Console.WriteLine("\tInvalid input. Please enter numeric values.");
             }
         }
 
         public void ViewAvailableSeats()
         {
-            try
+            Console.Write("Enter the show ID to view available seats: ");
+            if (!int.TryParse(Console.ReadLine(), out int showId) || !seats.ContainsKey(showId))
             {
-                Console.Write("Enter the show id to view available seats: ");
-                int showId = int.Parse(Console.ReadLine());
-
-                if (!seats.ContainsKey(showId))
-                {
-                    Console.WriteLine("\tShow id does not exist");
-                    return;
-                }
-
-                Console.WriteLine($"Available seats for show {showId}:");
-                int[,] seatMatrix = seats[showId];
-
-                for (int i = 0; i < row; i++)
-                {
-                    for (int j = 0; j < col; j++)
-                    {
-                        Console.Write(seatMatrix[i, j] == 0 ? "O " : "X ");
-                    }
-                    Console.WriteLine();
-                }
+                Console.WriteLine("\tInvalid show ID.");
+                return;
             }
-            catch (FormatException)
+
+            Console.WriteLine($"Available seats for Show {showId}:");
+            int[,] seatMatrix = seats[showId];
+
+            for (int i = 0; i < row; i++)
             {
-                Console.WriteLine("\tInvalid input. Please enter numeric values.");
+                for (int j = 0; j < col; j++)
+                {
+                    Console.Write(seatMatrix[i, j] == 0 ? "O " : "X ");
+                }
+                Console.WriteLine();
             }
         }
     }
@@ -162,6 +143,7 @@ namespace myprograme
     {
         static void Main(string[] args)
         {
+            // Adding Halls and Shows
             Hall hallOne = new Hall(5, 10, 1);
             Hall hallTwo = new Hall(6, 8, 2);
 
@@ -170,51 +152,56 @@ namespace myprograme
 
             while (true)
             {
-                Console.WriteLine("\nOptions: ");
-                Console.WriteLine("1 : View all shows today");
-                Console.WriteLine("2 : View available seats");
-                Console.WriteLine("3 : Book Ticket");
-                Console.WriteLine("4 : Exit");
+                Console.WriteLine("\n\tMOVIE THEATER TICKET MANAGEMENT SYSTEM");
+                Console.WriteLine("Options:");
+                Console.WriteLine("1: View all shows");
+                Console.WriteLine("2: View available seats");
+                Console.WriteLine("3: Book tickets");
+                Console.WriteLine("4: Exit");
 
-                try
+                Console.Write("Enter your choice: ");
+                if (!int.TryParse(Console.ReadLine(), out int choice))
                 {
-                    Console.Write("Enter Option: ");
-                    int choice = int.Parse(Console.ReadLine());
-
-                    switch (choice)
-                    {
-                        case 1:
-                            Console.WriteLine("\nCurrently running shows:");
-                            foreach (var hall in StarCinema.GetHallList())
-                            {
-                                hall.ViewShowList();
-                            }
-                            break;
-                        case 2:
-                            Console.WriteLine("Choose a hall:");
-                            foreach (var hall in StarCinema.GetHallList())
-                            {
-                                hall.ViewAvailableSeats();
-                            }
-                            break;
-                        case 3:
-                            Console.WriteLine("Choose a hall:");
-                            foreach (var hall in StarCinema.GetHallList())
-                            {
-                                hall.BookSeats();
-                            }
-                            break;
-                        case 4:
-                            Console.WriteLine("\nExiting the system. Have a nice day!");
-                            return;
-                        default:
-                            Console.WriteLine("\nInvalid Option. Please try again.");
-                            break;
-                    }
+                    Console.WriteLine("\tInvalid input. Please enter a number.");
+                    continue;
                 }
-                catch (FormatException)
+
+                switch (choice)
                 {
-                    Console.WriteLine("\tInvalid input. Please enter an integer.");
+                    case 1:
+                        foreach (var hall in StarCinema.GetHallList())
+                        {
+                            hall.ViewShowList();
+                        }
+                        break;
+
+                    case 2:
+                        Console.Write("Enter hall number to view seats: ");
+                        if (!int.TryParse(Console.ReadLine(), out int hallNumber) || StarCinema.GetHallByNumber(hallNumber) == null)
+                        {
+                            Console.WriteLine("\tInvalid hall number.");
+                            break;
+                        }
+                        StarCinema.GetHallByNumber(hallNumber).ViewAvailableSeats();
+                        break;
+
+                    case 3:
+                        Console.Write("Enter hall number to book tickets: ");
+                        if (!int.TryParse(Console.ReadLine(), out hallNumber) || StarCinema.GetHallByNumber(hallNumber) == null)
+                        {
+                            Console.WriteLine("\tInvalid hall number.");
+                            break;
+                        }
+                        StarCinema.GetHallByNumber(hallNumber).BookSeats();
+                        break;
+
+                    case 4:
+                        Console.WriteLine("\tExiting. Have a great day!");
+                        return;
+
+                    default:
+                        Console.WriteLine("\tInvalid choice. Please try again.");
+                        break;
                 }
             }
         }
